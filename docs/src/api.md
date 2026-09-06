@@ -98,6 +98,7 @@ tortuosity
 effective_diffusivity
 formation_factor
 reconstruct_field
+check_flux_convergence
 ```
 
 ## Cavern detection
