@@ -8,7 +8,7 @@ We compare `Tortuosity.jl` against three established image-based tortuosity tool
 - [PuMA](https://github.com/nasa/puma) — C++ with Python bindings (`pumapy`), finite volume with SciPy's conjugate gradient on the full grid, CPU only.
 - [PoreSpy](https://github.com/PMEAL/porespy) — Python, `tortuosity_fd`: the image becomes an OpenPNM cubic network over the pore voxels alone, and Fickian diffusion on it is solved by Ruge-Stuben algebraic multigrid from PyAMG. CPU only.
 
-Every number below is traceable to a file under [`benchmarks/results/`](https://github.com/ma-sadeghi/Tortuosity.jl/tree/main/benchmarks/results). Where something is not recorded, this page says so rather than filling the gap. If you want the answer rather than the method, go straight to [Results](@ref); everything before it is protocol.
+Every number below is traceable to a file under [`benchmarks/results/`](https://github.com/poromics/Tortuosity.jl/tree/main/benchmarks/results). Where something is not recorded, this page says so rather than filling the gap. If you want the answer rather than the method, go straight to [Results](@ref); everything before it is protocol.
 
 ```@contents
 Pages = ["benchmark.md"]
@@ -288,7 +288,7 @@ PoreSpy also reached the 0.1% target in all 15 cases, and its ``\tau`` at the ru
 
 #### Scaling probes, and what the larger sizes would have cost
 
-Neither tool is guessed at. Each was run once at ``400^3``, blobiness 1.0, beside its ``200^3`` counterpart, and the ratio of the pair is a measured exponent. The probes live in [`results/scaling-probes.csv`](https://github.com/ma-sadeghi/Tortuosity.jl/tree/main/benchmarks/results) and are what the projected curves in every figure rest on.
+Neither tool is guessed at. Each was run once at ``400^3``, blobiness 1.0, beside its ``200^3`` counterpart, and the ratio of the pair is a measured exponent. The probes live in [`results/scaling-probes.csv`](https://github.com/poromics/Tortuosity.jl/tree/main/benchmarks/results) and are what the projected curves in every figure rest on.
 
 | tool | probe | ``400^3`` / ``200^3`` | exponent |
 |---|---|---|---|
@@ -482,10 +482,10 @@ What remains is narrower: **atomic additions are still used to assemble the Gale
 
 ## Reproducing
 
-The benchmark harness, environment specification, and raw CSV results live in [`benchmarks/`](https://github.com/ma-sadeghi/Tortuosity.jl/tree/main/benchmarks). Python dependencies (PuMA, PyTorch, the taufactor fork) are pinned with [pixi](https://pixi.sh). The taufactor fork is not a submodule: `run/setup.sh` clones it under `vendor/` at the pinned commit, which keeps this repository's git tree free of a gitlink that would make `Pkg.add` fall back to cloning the whole repository. Read `benchmarks/README.md` before changing anything, and `benchmarks/run/ORCHESTRATION.md` before driving a campaign on a rented machine.
+The benchmark harness, environment specification, and raw CSV results live in [`benchmarks/`](https://github.com/poromics/Tortuosity.jl/tree/main/benchmarks). Python dependencies (PuMA, PyTorch, the taufactor fork) are pinned with [pixi](https://pixi.sh). The taufactor fork is not a submodule: `run/setup.sh` clones it under `vendor/` at the pinned commit, which keeps this repository's git tree free of a gitlink that would make `Pkg.add` fall back to cloning the whole repository. Read `benchmarks/README.md` before changing anything, and `benchmarks/run/ORCHESTRATION.md` before driving a campaign on a rented machine.
 
 ```bash
-git clone https://github.com/ma-sadeghi/Tortuosity.jl.git
+git clone https://github.com/poromics/Tortuosity.jl.git
 cd Tortuosity.jl/benchmarks
 
 # Resolve both environments and prove the machine works before anything is

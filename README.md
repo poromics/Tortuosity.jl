@@ -1,6 +1,6 @@
 # Tortuosity.jl
 
-[![Build Status](https://github.com/ma-sadeghi/Tortuosity.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/ma-sadeghi/Tortuosity.jl/actions/workflows/CI.yml?query=branch%3Amain)
+[![Build Status](https://github.com/poromics/Tortuosity.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/poromics/Tortuosity.jl/actions/workflows/CI.yml?query=branch%3Amain)
 
 > [!WARNING]  
 > `Tortuosity.jl` is registered in the official Julia package registry. It is still under active development, and the API can change.
@@ -80,11 +80,11 @@ sol = solve(sim)          # automatic coarse-space preconditioner and element-ty
 
 ## Documentation
 
-Full documentation, including tutorials and the API reference, is at [ma-sadeghi.github.io/Tortuosity.jl](https://ma-sadeghi.github.io/Tortuosity.jl/stable/).
+Full documentation, including tutorials and the API reference, is at [poromics.github.io/Tortuosity.jl](https://poromics.github.io/Tortuosity.jl/stable/).
 
 ## Contributing and support
 
-Bug reports, feature requests, and questions are all welcome on the [issue tracker](https://github.com/ma-sadeghi/Tortuosity.jl/issues). See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and the pull request workflow.
+Bug reports, feature requests, and questions are all welcome on the [issue tracker](https://github.com/poromics/Tortuosity.jl/issues). See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and the pull request workflow.
 
 ## License
 

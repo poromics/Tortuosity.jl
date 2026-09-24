@@ -31,7 +31,7 @@ is safer to re-run the timing stages from scratch.
 
 ```bash
 ssh POD
-git clone https://github.com/ma-sadeghi/Tortuosity.jl.git   # or push a branch and clone that
+git clone https://github.com/poromics/Tortuosity.jl.git   # or push a branch and clone that
 cd Tortuosity.jl/benchmarks
 ```
 

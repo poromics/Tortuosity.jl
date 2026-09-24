@@ -39,7 +39,7 @@ makedocs(;
 )
 
 deploydocs(;
-    repo="github.com/ma-sadeghi/Tortuosity.jl.git",
+    repo="github.com/poromics/Tortuosity.jl.git",
     versions=["stable" => "v^", "v#.#.#", "dev" => "dev"],
     forcepush=true,
     push_preview=true,

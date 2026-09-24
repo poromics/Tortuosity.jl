@@ -8,7 +8,7 @@ This project is governed by the [Contributor Covenant](CODE_OF_CONDUCT.md). By p
 
 ## Reporting issues
 
-If you find a bug or have a feature request, please open an issue on [GitHub](https://github.com/ma-sadeghi/Tortuosity.jl/issues). Include:
+If you find a bug or have a feature request, please open an issue on [GitHub](https://github.com/poromics/Tortuosity.jl/issues). Include:
 
 - A minimal reproducible example
 - The Julia version and OS you are using
@@ -27,7 +27,7 @@ If you find a bug or have a feature request, please open an issue on [GitHub](ht
 ## Development setup
 
 ```bash
-git clone https://github.com/ma-sadeghi/Tortuosity.jl.git
+git clone https://github.com/poromics/Tortuosity.jl.git
 cd Tortuosity.jl
 julia --project=. -e 'using Pkg; Pkg.instantiate()'
 ```

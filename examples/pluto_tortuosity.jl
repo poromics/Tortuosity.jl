@@ -35,7 +35,7 @@ md"""
 
 Diffusion through a porous material is slower than diffusion through open space, because the molecules have to go *around* things. The **tortuosity factor** τ is the number that says how much slower.
 
-[`Tortuosity.jl`](https://github.com/ma-sadeghi/Tortuosity.jl) computes it directly from a binary 3-D image: it builds a finite-volume Laplacian over the pore voxels, solves it with a preconditioned conjugate gradient, and reads τ off the resulting flux. The same code runs on the CPU or on a GPU — there is a switch further down, and the two agree to about seven digits.
+[`Tortuosity.jl`](https://github.com/poromics/Tortuosity.jl) computes it directly from a binary 3-D image: it builds a finite-volume Laplacian over the pore voxels, solves it with a preconditioned conjugate gradient, and reads τ off the resulting flux. The same code runs on the CPU or on a GPU — there is a switch further down, and the two agree to about seven digits.
 
 Two buttons drive the notebook: one grows a microstructure, one solves it. Everything in between — slicing, rotating, recolouring — is free and updates as you touch it.
 """
