@@ -14,9 +14,10 @@ authors:
     affiliation: 1
   - name: Sawyer Hossfeld
     affiliation: 1
-  - name: Harry Kim
-    affiliation: 1
   - name: Mohammad Mehrnia
+    orcid: 0009-0004-2513-5240
+    affiliation: 1
+  - name: Harry Kim
     affiliation: 1
   - name: Jeff T. Gostick
     orcid: 0000-0001-7736-7124
