@@ -16,6 +16,12 @@ A maintainability pass over the package, the benchmark harness and the documenta
 - `Tortuosity.find_caverns` and `Tortuosity.flux_out` appear in the API reference. Neither is exported and neither changed behaviour; they were simply undiscoverable.
 - A Theory page in the documentation, covering what the tortuosity factor is and how it is computed. The text already existed but sat outside the documentation source tree and was never published.
 
+### Compatibility
+
+- Supports CUDA.jl 6, LinearSolve.jl 4 and 5, OrdinaryDiffEqStabilizedRK.jl 2 and LsqFit.jl 0.16, alongside the versions already supported ([#109](https://github.com/poromics/Tortuosity.jl/issues/109)). Every bound was widened rather than moved, so an environment pinned to CUDA 5, LinearSolve 3 or OrdinaryDiffEqStabilizedRK 1 resolves exactly as before. Picking up CUDA.jl 6 also clears the `You are using CUDA 13.3.0, but CUDA.jl was precompiled for CUDA 13.2.0` error that CUDA.jl 5 printed on every load.
+- AMDGPU.jl and Metal.jl, the two GPU backends that had no compat bound at all, are bounded to their current major versions, `2` and `1`.
+- Under LinearSolve 5, a solution no longer carries its `LinearCache` in `sol.cache`; it is `nothing`. This is LinearSolve's change, and it reaches `solve(sim, alg)` only for an unrefined solve with a LinearSolve algorithm. A refined `Float32` solve and a `HostCG` solve still return their cache. To keep a cache across solves, build it with `LinearSolve.init(sim.prob, alg)` and call `solve!` on it.
+
 ### Removed
 
 - The unused `src/plottools.jl`, and the internal helpers `args_to_dict`, `format_args_dict`, `find_true_indices` and `build_reverse_lookup`. None was exported, documented or called from anywhere in the package.

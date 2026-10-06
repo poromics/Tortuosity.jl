@@ -57,7 +57,12 @@ function true_relative_residual(sim, u)
     return norm(r64) / Float64(norm(b))
 end
 
-base_solve(sim) = solve(sim.prob, KrylovJL_CG(); reltol=1.0f-6, abstol=0.0f0)
+# Returns the cache alongside the solution because `_refine` borrows it, and
+# LinearSolve does not return it on the solution.
+function base_solve(sim)
+    cache = LinearSolve.init(sim.prob, KrylovJL_CG(); reltol=1.0f-6, abstol=0.0f0)
+    return solve!(cache), cache
+end
 
 @testset "a Float32 host solve is refined by default" begin
     # The element type of `b` is what selects refinement, so a host Float32
@@ -98,10 +103,9 @@ end
     # the cache afterwards — which is the whole reason refinement borrows it
     # rather than building its own — must not inherit any of those changes.
     sim = float32_host_problem(REFINE_IMAGE)
-    sol = base_solve(sim)
-    cache = sol.cache
+    sol, cache = base_solve(sim)
     b_before, reltol_before, abstol_before = cache.b, cache.reltol, cache.abstol
-    _refine(sol, sim, KrylovJL_CG())
+    _refine(sol, cache, sim, KrylovJL_CG())
     @test cache.b === b_before
     @test cache.reltol === reltol_before
     @test cache.abstol === abstol_before
@@ -118,8 +122,8 @@ end
     sim = float32_host_problem(img)
     @test iszero(norm(sim.prob.b))
 
-    sol = base_solve(sim)
-    refined = _refine(sol, sim, KrylovJL_CG())
+    sol, cache = base_solve(sim)
+    refined = _refine(sol, cache, sim, KrylovJL_CG())
     @test refined === sol
     @test !isnan(refined.resid[])
 end
@@ -130,14 +134,14 @@ end
     # than as a quietly-degraded solution, and the vector returned is still no
     # worse than the base solve it was built from.
     sim = float32_host_problem(REFINE_IMAGE)
-    sol = base_solve(sim)
+    sol, cache = base_solve(sim)
     resid_before = true_relative_residual(sim, sol.u)
-    sol.cache.maxiters = 1
+    cache.maxiters = 1
     # Each starved round logs a max-iterations warning. Those are left to print:
     # silencing them needs the `Logging` stdlib, which is in neither the package
     # deps nor the test target, and they are honest output of a solve this test
     # deliberately cripples.
-    refined = _refine(sol, sim, KrylovJL_CG())
+    refined = _refine(sol, cache, sim, KrylovJL_CG())
     @test Symbol(refined.retcode) === :Failure
     @test refined.stats.solved == false
     @test true_relative_residual(sim, refined.u) <= resid_before
@@ -145,11 +149,11 @@ end
 
 @testset "success requires the returned vector to meet the requested residual" begin
     sim = float32_host_problem(REFINE_IMAGE)
-    sol = base_solve(sim)
-    sol.cache.reltol = eps(Float32)
+    sol, cache = base_solve(sim)
+    cache.reltol = eps(Float32)
 
-    refined = _refine(sol, sim, KrylovJL_CG(); rounds=0)
-    @test refined.resid[] > sol.cache.reltol
+    refined = _refine(sol, cache, sim, KrylovJL_CG(); rounds=0)
+    @test refined.resid[] > cache.reltol
     @test Symbol(refined.retcode) === :Failure
     @test refined.stats.solved == false
 end
@@ -157,14 +161,14 @@ end
 @testset "a weak correction continues while the true residual improves" begin
     target = 2.5f-7
     short_sim = float32_host_problem(REFINE_IMAGE)
-    short = base_solve(short_sim)
-    short.cache.reltol = target
-    stopped = _refine(short, short_sim, KrylovJL_CG(); rounds=1, shrink=0.45)
+    short, short_cache = base_solve(short_sim)
+    short_cache.reltol = target
+    stopped = _refine(short, short_cache, short_sim, KrylovJL_CG(); rounds=1, shrink=0.45)
 
     full_sim = float32_host_problem(REFINE_IMAGE)
-    full = base_solve(full_sim)
-    full.cache.reltol = target
-    continued = _refine(full, full_sim, KrylovJL_CG(); shrink=0.45)
+    full, full_cache = base_solve(full_sim)
+    full_cache.reltol = target
+    continued = _refine(full, full_cache, full_sim, KrylovJL_CG(); shrink=0.45)
 
     @test stopped.resid[] > target
     @test continued.resid[] <= target
@@ -174,65 +178,65 @@ end
 
 @testset "a stalled loose correction falls back to the conservative tolerance" begin
     failed_sim = float32_host_problem(REFINE_IMAGE)
-    failed = base_solve(failed_sim)
+    failed, failed_cache = base_solve(failed_sim)
     without_fallback = _refine(
-        failed, failed_sim, KrylovJL_CG(); correction_reltol=1.0f0,
+        failed, failed_cache, failed_sim, KrylovJL_CG(); correction_reltol=1.0f0,
     )
 
     recovered_sim = float32_host_problem(REFINE_IMAGE)
-    recovered = base_solve(recovered_sim)
+    recovered, recovered_cache = base_solve(recovered_sim)
     with_fallback = _refine(
-        recovered, recovered_sim, KrylovJL_CG();
+        recovered, recovered_cache, recovered_sim, KrylovJL_CG();
         correction_reltol=1.0f0, fallback_reltol=0.5f0,
     )
 
     @test Symbol(without_fallback.retcode) === :Failure
     @test Symbol(with_fallback.retcode) === :Success
-    @test with_fallback.resid[] <= recovered.cache.reltol
+    @test with_fallback.resid[] <= recovered_cache.reltol
     @test with_fallback.iters > without_fallback.iters
 end
 
 @testset "absolute tolerance can satisfy the solver contract" begin
     sim = float32_host_problem(REFINE_IMAGE)
-    sol = base_solve(sim)
-    sol.cache.reltol = eps(Float32)
+    sol, cache = base_solve(sim)
+    cache.reltol = eps(Float32)
     abs_resid = true_relative_residual(sim, sol.u) * Float64(norm(sim.prob.b))
-    sol.cache.abstol = Float32(1.01 * abs_resid)
+    cache.abstol = Float32(1.01 * abs_resid)
 
-    refined = _refine(sol, sim, KrylovJL_CG(); rounds=0)
-    @test refined.resid[] > sol.cache.reltol
-    @test refined.resid[] * Float64(norm(sim.prob.b)) <= sol.cache.abstol
+    refined = _refine(sol, cache, sim, KrylovJL_CG(); rounds=0)
+    @test refined.resid[] > cache.reltol
+    @test refined.resid[] * Float64(norm(sim.prob.b)) <= cache.abstol
     @test Symbol(refined.retcode) === :Success
     @test refined.stats.solved == true
 end
 
 @testset "relative and absolute tolerances contribute together" begin
     sim = float32_host_problem(REFINE_IMAGE)
-    sol = base_solve(sim)
+    sol, cache = base_solve(sim)
     rel_resid = true_relative_residual(sim, sol.u)
     abs_resid = rel_resid * Float64(norm(sim.prob.b))
-    sol.cache.reltol = Float32(0.6 * rel_resid)
-    sol.cache.abstol = Float32(0.5 * abs_resid)
+    cache.reltol = Float32(0.6 * rel_resid)
+    cache.abstol = Float32(0.5 * abs_resid)
 
-    refined = _refine(sol, sim, KrylovJL_CG(); rounds=0)
-    @test rel_resid > sol.cache.reltol
-    @test abs_resid > sol.cache.abstol
+    refined = _refine(sol, cache, sim, KrylovJL_CG(); rounds=0)
+    @test rel_resid > cache.reltol
+    @test abs_resid > cache.abstol
     @test Symbol(refined.retcode) === :Success
     @test refined.stats.solved == true
 end
 
 @testset "corrections do not inherit the outer absolute tolerance" begin
     sim = float32_host_problem(REFINE_IMAGE)
-    sol = base_solve(sim)
+    sol, cache = base_solve(sim)
     base_iters = sol.iters
     base_abs_resid = true_relative_residual(sim, sol.u) * Float64(norm(sim.prob.b))
-    sol.cache.reltol = eps(Float32)
-    sol.cache.abstol = Float32(0.75 * base_abs_resid)
+    cache.reltol = eps(Float32)
+    cache.abstol = Float32(0.75 * base_abs_resid)
 
-    refined = _refine(sol, sim, KrylovJL_CG())
+    refined = _refine(sol, cache, sim, KrylovJL_CG())
     refined_abs_resid = refined.resid[] * Float64(norm(sim.prob.b))
-    @test base_abs_resid > sol.cache.abstol
-    @test refined_abs_resid <= sol.cache.abstol
+    @test base_abs_resid > cache.abstol
+    @test refined_abs_resid <= cache.abstol
     @test refined.iters > base_iters
     @test Symbol(refined.retcode) === :Success
 end

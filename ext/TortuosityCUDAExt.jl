@@ -3,13 +3,16 @@
 module TortuosityCUDAExt
 
 using CUDA
-using CUDA.CUSPARSE
 using Tortuosity
 using Tortuosity: PortableSparseCSC
 using KernelAbstractions
 using LinearAlgebra
 using SparseArrays
 using PrecompileTools: @setup_workload, @compile_workload
+
+# CUDA.jl 6 moved the cuSPARSE wrappers into their own package, reachable as
+# `CUDA.cuSPARSE`, and deprecated the `CUDA.CUSPARSE` name that 5.x provides.
+const CUSPARSE = isdefined(CUDA, :cuSPARSE) ? CUDA.cuSPARSE : CUDA.CUSPARSE
 
 function __init__()
     if CUDA.functional()
@@ -19,7 +22,7 @@ function __init__()
 end
 
 Tortuosity._on_gpu(::CuArray) = true
-Tortuosity._on_gpu(::CUDA.CUSPARSE.CuSparseMatrix) = true
+Tortuosity._on_gpu(::CUSPARSE.CuSparseMatrix) = true
 @static if pkgversion(CUDA) >= v"5.4"
     Tortuosity._async_return_safe(::CuArray) = true
 end
@@ -66,13 +69,13 @@ Tortuosity._free!(x::CuArray) = CUDA.unsafe_free!(x)
 ) where {Tv,Ti<:Union{Int32,Int64},V<:CuVector,Vi<:CuVector{Ti}}
     cached = A._cache[]
     if A.symmetric
-        cached isa CUDA.CUSPARSE.CuSparseMatrixCSR{Tv,Ti} && return cached
-        wrapped = CUDA.CUSPARSE.CuSparseMatrixCSR{Tv,Ti}(
+        cached isa CUSPARSE.CuSparseMatrixCSR{Tv,Ti} && return cached
+        wrapped = CUSPARSE.CuSparseMatrixCSR{Tv,Ti}(
             A.colptr, A.rowval, A.nzval, (A.m, A.n)
         )
     else
-        cached isa CUDA.CUSPARSE.CuSparseMatrixCSC{Tv,Ti} && return cached
-        wrapped = CUDA.CUSPARSE.CuSparseMatrixCSC{Tv,Ti}(
+        cached isa CUSPARSE.CuSparseMatrixCSC{Tv,Ti} && return cached
+        wrapped = CUSPARSE.CuSparseMatrixCSC{Tv,Ti}(
             A.colptr, A.rowval, A.nzval, (A.m, A.n)
         )
     end
@@ -107,13 +110,13 @@ function _as_cusparse(
     colptr32() = convert(CuVector{Int32}, A.colptr)
     rowval32() = convert(CuVector{Int32}, A.rowval)
     if A.symmetric
-        cached isa CUDA.CUSPARSE.CuSparseMatrixCSR{Tv,Int32} && return cached
-        wrapped = CUDA.CUSPARSE.CuSparseMatrixCSR{Tv,Int32}(
+        cached isa CUSPARSE.CuSparseMatrixCSR{Tv,Int32} && return cached
+        wrapped = CUSPARSE.CuSparseMatrixCSR{Tv,Int32}(
             colptr32(), rowval32(), A.nzval, (A.m, A.n)
         )
     else
-        cached isa CUDA.CUSPARSE.CuSparseMatrixCSC{Tv,Int32} && return cached
-        wrapped = CUDA.CUSPARSE.CuSparseMatrixCSC{Tv,Int32}(
+        cached isa CUSPARSE.CuSparseMatrixCSC{Tv,Int32} && return cached
+        wrapped = CUSPARSE.CuSparseMatrixCSC{Tv,Int32}(
             colptr32(), rowval32(), A.nzval, (A.m, A.n)
         )
     end

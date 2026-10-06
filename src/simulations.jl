@@ -340,12 +340,15 @@ function LinearSolve.solve(
     isnothing(maxiters) || push!(opts, :maxiters => maxiters)
     isnothing(Pl) || push!(opts, :Pl => Pl)
     verbose && @info "Solving" alg reltol precond = isnothing(Pl) ? :none : :two_level
-    sol = solve(sim.prob, alg; opts..., kwargs...)
+    # Held separately because refinement reuses it, and LinearSolve does not
+    # promise to return it on the solution.
+    cache = LinearSolve.init(sim.prob, alg; opts..., kwargs...)
+    sol = solve!(cache)
     (isnothing(refine) ? _refines_by_default(T) : refine) || return sol
     correction_reltol = _refinement_correction_reltol(sim)
     fallback_reltol = correction_reltol > REFINEMENT_CORRECTION_RELTOL ?
         REFINEMENT_CORRECTION_RELTOL : nothing
-    return _refine(sol, sim, alg; correction_reltol, fallback_reltol)
+    return _refine(sol, cache, sim, alg; correction_reltol, fallback_reltol)
 end
 
 # `Float32` CG cannot drive the relative residual much below `1e-6`; asking it to
@@ -399,7 +402,7 @@ function _refinement_correction_reltol(sim::SteadyDiffusionProblem)
 end
 
 """
-    _refine(sol, sim, alg)
+    _refine(sol, cache, sim, alg)
 
 Repair a `Float32` solve by refining it against a `Float64` residual.
 
@@ -425,7 +428,7 @@ loose correction solves retain an outer true-residual contract without making
 the common successful path pay for tighter inner solves.
 """
 function _refine(
-    sol, sim, alg;
+    sol, cache, sim, alg;
     rounds=8, shrink=0.5, correction_reltol=REFINEMENT_CORRECTION_RELTOL,
     fallback_reltol=nothing,
 )
@@ -437,7 +440,6 @@ function _refine(
     #
     # `cache.u` is the same array as `sol.u`, so the first correction overwrites
     # it. `sol.u` is therefore read once, here, before any of that happens.
-    cache = sol.cache
     b_before, reltol_before, abstol_before = cache.b, cache.reltol, cache.abstol
     # Every residual below is measured relative to `‖b‖`, so a zero right-hand side
     # would make each of them `NaN` — and `NaN` compares false against the shrink
@@ -590,7 +592,7 @@ function _refine(
     # residual, this is the true one relative to `‖b‖` — but that difference is the
     # point of refining, and it is documented above.
     return LinearSolve.SciMLBase.build_linear_solution(
-        alg, u, Ref(resid), sol.cache; retcode=retcode, iters=iters, stats=base_stats,
+        alg, u, Ref(resid), cache; retcode=retcode, iters=iters, stats=base_stats,
     )
 end
 
