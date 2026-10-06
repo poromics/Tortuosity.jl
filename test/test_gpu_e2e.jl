@@ -184,15 +184,16 @@ end
     sim = SteadyDiffusionProblem(
         img; axis=:x, gpu=true, matrixfree=true, warn_nonpercolating=false,
     )
-    base = solve(sim.prob, KrylovJL_CG(); reltol=1.0f-6, abstol=0.0f0)
-    base.cache.reltol = 2.7f-7
+    cache = Tortuosity.LinearSolve.init(sim.prob, KrylovJL_CG(); reltol=1.0f-6, abstol=0.0f0)
+    base = solve!(cache)
+    cache.reltol = 2.7f-7
     refined = Tortuosity._refine(
-        base, sim, KrylovJL_CG();
+        base, cache, sim, KrylovJL_CG();
         rounds=3, correction_reltol=0.6f0, fallback_reltol=0.5f0,
     )
 
     @test Symbol(refined.retcode) === :Success
-    @test refined.resid[] <= base.cache.reltol
+    @test refined.resid[] <= cache.reltol
 end
 
 @testset "a scalar D narrows to the device element type" begin
