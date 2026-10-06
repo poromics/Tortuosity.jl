@@ -2,9 +2,11 @@
 
 All notable changes to Tortuosity.jl are recorded here. Versions follow [Julia's SemVer rules](https://pkgdocs.julialang.org/v1/compatibility/), under which a change to the leftmost non-zero version component is breaking.
 
-## Unreleased
+## v0.3.0 — 2026-10-06
 
-A maintainability pass over the package, the benchmark harness and the documentation. No solver, preconditioner or numerical result changed, and every published benchmark figure regenerates byte-identical from the unchanged result tables.
+Support for CUDA.jl 6, LinearSolve.jl 5 and OrdinaryDiffEqStabilizedRK.jl 2, and a maintainability pass over the package, the benchmark harness and the documentation. No solver, preconditioner or numerical result changed, and every published benchmark figure regenerates byte-identical from the unchanged result tables.
+
+This is a breaking release under Julia's SemVer rules because two defaults changed, both listed under **Changed**: where a mid-sized steady problem runs on CUDA, and `find_caverns`'s `gpu` keyword.
 
 ### Changed
 
